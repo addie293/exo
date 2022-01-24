@@ -1,0 +1,61 @@
+version: '3'
+
+volumes:
+  vportainer:
+  vmariadb:
+  vphpmyadmin:
+
+networks:
+  default:
+    name: movieapp-network
+    driver: bridge
+    external: false
+
+services:
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ce:latest
+    networks:
+      default:
+    ports:
+      - '9000:9000'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - vportainer:/data
+    restart: always
+
+  mariadb:
+    container_name: mariadb
+    image: bitnami/mariadb:latest
+    env_file:
+      - env_files/mariadb.env
+    networks:
+      default:
+    ports:
+      - '3306:3306'
+    volumes:
+      - vmariadb:/bitnami/mariadb/ 
+    restart: always
+  
+  phpmyadmin:
+    container_name: phpmyadmin
+    image: phpmyadmin
+    env_file:
+      - env_files/phpmyadmin.env
+    networks:
+      default:
+    ports:
+      - '7472:80'
+    restart: always
+    depends_on:
+      - mariadb
+  
+  movieapp-backend:
+    container_name: movieapp-backend
+    build: .
+    image: movieapp-backend:latest
+    networks:
+      default:
+    ports:
+      - '5000:5000'
+    restart: always
